@@ -3,364 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TapTap Messenger Premium</title>
+    <title>TapTap Messenger Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b0e14;
-            --panel: rgba(23, 28, 38, 0.8);
-            --accent: #7c4dff;
-            --accent-light: #b388ff;
-            --text: #e1e1e6;
-            --text-dim: #a1a1aa;
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --my-msg: #7c4dff;
+            --bg: #0d0f14;
+            --panel: rgba(25, 30, 41, 0.7);
+            --accent: #6366f1;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
         }
 
-        * { box-sizing: border-box; transition: all 0.2s ease; }
-
-        body, html { 
-            margin: 0; padding: 0; height: 100%; 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg);
-            background-image: radial-gradient(circle at top right, #1a1535, transparent),
-                              radial-gradient(circle at bottom left, #0d1117, transparent);
-            color: var(--text);
-            overflow: hidden;
+        * { box-sizing: border-box; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); 
+            height: 100vh; overflow: hidden;
         }
 
-        /* --- AUTH SCREEN --- */
+        /* --- AUTH --- */
         #auth-screen {
-            position: fixed; inset: 0; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--bg);
+            position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0d0f14 100%);
         }
-        .auth-card { 
-            width: 380px; padding: 40px; 
-            background: var(--panel);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        .card { 
+            background: var(--panel); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            padding: 40px; border-radius: 30px; width: 400px; text-align: center;
         }
 
         /* --- LAYOUT --- */
-        .app-container {
-            display: flex; height: 100vh; padding: 15px; gap: 15px;
+        .app { display: flex; height: 100vh; padding: 15px; gap: 15px; }
+        .glass { background: var(--panel); backdrop-filter: blur(15px); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; }
+        
+        #sidebar { width: 300px; display: flex; flex-direction: column; padding: 20px; }
+        #chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+        /* --- LISTS --- */
+        .scroll { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .scroll::-webkit-scrollbar { width: 4px; }
+        .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .item { 
+            padding: 12px; margin-bottom: 8px; cursor: pointer; border-radius: 15px; 
+            display: flex; align-items: center; gap: 12px; border: 1px solid transparent;
         }
+        .item:hover { background: rgba(255,255,255,0.05); }
+        .active { background: var(--accent) !important; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
 
-        .glass-panel {
-            background: var(--panel);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            display: flex; flex-direction: column;
-        }
-
-        #sidebar { width: 320px; padding: 20px; }
-        #chat-main { flex: 1; position: relative; overflow: hidden; }
-
-        /* --- ELEMENTS --- */
-        h2 { font-weight: 600; font-size: 22px; margin: 0; letter-spacing: -0.5px; }
-
-        .scroll-v { 
-            flex: 1; overflow-y: auto; padding-right: 8px; 
-            scrollbar-width: thin; scrollbar-color: var(--glass-border) transparent;
-        }
-        .scroll-v::-webkit-scrollbar { width: 4px; }
-        .scroll-v::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
-
-        .item-btn {
-            padding: 14px 18px; margin-bottom: 8px; cursor: pointer;
-            border-radius: 16px; border: 1px solid transparent;
-            display: flex; align-items: center; gap: 12px;
-            background: rgba(255,255,255,0.03);
-        }
-        .item-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--glass-border); }
-        .active-ch { background: var(--accent) !important; box-shadow: 0 8px 20px rgba(124, 77, 255, 0.3); }
+        .avatar { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; background: #334155; }
 
         /* --- MESSAGES --- */
-        #messages { padding: 25px; gap: 12px; display: flex; flex-direction: column; }
-        .msg {
-            padding: 12px 18px; border-radius: 18px; max-width: 75%;
-            font-size: 15px; line-height: 1.5; position: relative;
-            animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        .msg { margin-bottom: 15px; display: flex; flex-direction: column; max-width: 80%; }
+        .msg.my { align-self: flex-end; align-items: flex-end; }
+        .bubble { 
+            padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.4;
+            background: rgba(255,255,255,0.05); position: relative;
         }
-        .msg.my { 
-            align-self: flex-end; background: var(--my-msg); color: white; 
-            border-bottom-right-radius: 4px; 
-        }
-        .msg.other { 
-            align-self: flex-start; background: rgba(255,255,255,0.07); 
-            border-bottom-left-radius: 4px; 
-        }
-        .msg-meta { font-size: 11px; opacity: 0.6; margin-bottom: 4px; display: block; font-weight: 600; }
+        .my .bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+        .other .bubble { background: #1e293b; border-bottom-left-radius: 4px; }
+        .msg-info { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; cursor: pointer; }
 
-        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        /* --- INPUT --- */
+        .input-box { padding: 20px; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 10px; }
+        .emoji-bar { display: flex; gap: 8px; font-size: 20px; }
+        .emoji-bar span { cursor: pointer; opacity: 0.7; }
+        .emoji-bar span:hover { opacity: 1; transform: scale(1.2); }
 
-        /* --- INPUTS --- */
-        input, textarea {
-            background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
-            border-radius: 14px; padding: 14px; color: white; outline: none; width: 100%;
+        /* --- FORMS --- */
+        input, textarea { 
+            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+            background: rgba(0,0,0,0.3); color: white; outline: none; margin-bottom: 10px;
         }
-        input:focus { border-color: var(--accent); background: rgba(0,0,0,0.3); }
-
-        button {
-            background: var(--accent); border: none; padding: 12px 24px; border-radius: 14px;
-            color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        button { 
+            background: var(--accent); color: white; border: none; padding: 12px 20px; 
+            border-radius: 12px; font-weight: 600; cursor: pointer; width: 100%;
         }
-        button:hover { transform: translateY(-1px); filter: brightness(1.1); box-shadow: 0 6px 15px rgba(124, 77, 255, 0.4); }
-        button:active { transform: translateY(0); }
-
-        .input-area { padding: 20px; display: flex; gap: 12px; background: rgba(0,0,0,0.1); }
+        button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
         /* --- MODAL --- */
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+        .modal { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
             display: none; align-items: center; justify-content: center; z-index: 1000;
-            backdrop-filter: blur(10px);
         }
+        .modal-content { width: 400px; }
 
-        .admin-tag { color: #ff4757; font-size: 10px; border: 1px solid #ff4757; padding: 2px 6px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
+        .prof-avatar { width: 100px; height: 100px; border-radius: 30px; margin-bottom: 15px; border: 3px solid var(--accent); }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
-    <div class="auth-card">
-        <h1 id="auth-title" style="margin-top:0; font-weight: 600;">TapTap</h1>
-        <p style="color: var(--text-dim); margin-bottom: 30px;">Твой личный крипто-мессенджер</p>
-        <input type="email" id="auth-email" placeholder="Электронная почта" style="margin-bottom: 12px;">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="margin-bottom: 25px;">
-        <button id="main-auth-btn" onclick="runAuth()" style="width: 100%; padding: 16px;">Войти в аккаунт</button>
-        
-        <p style="margin-top: 25px; font-size: 14px;">
-            <span id="auth-toggle-text" style="color: var(--text-dim);">Впервые здесь?</span> 
-            <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); text-decoration: none; font-weight: 600;" id="auth-toggle-link">Создать аккаунт</a>
+    <div class="card">
+        <h1 id="auth-title">TapTap Pro</h1>
+        <input type="email" id="auth-email" placeholder="Email">
+        <input type="password" id="auth-pass" placeholder="Пароль">
+        <button onclick="runAuth()" id="auth-btn">Войти</button>
+        <p style="font-size: 14px; margin-top: 15px; color: var(--text-dim);">
+            <span id="auth-mode-text">Нет аккаунта?</span> 
+            <a href="#" onclick="toggleAuth()" style="color: var(--accent); text-decoration: none;">Создать</a>
         </p>
-        <p id="auth-error" style="color: #ff4757; font-size: 13px; margin-top: 15px; min-height: 15px;"></p>
     </div>
 </div>
 
-<div class="app-container">
-    <div id="sidebar" class="glass-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2>Чаты</h2>
-            <button onclick="showSettings()" style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px;">⚙</button>
-        </div>
-        <div id="channel-list" class="scroll-v"></div>
-        <button onclick="createChannel()" style="background: rgba(255,255,255,0.05); color: var(--text); margin-top: 15px;">+ Новый канал</button>
-    </div>
-
-    <div id="chat-main" class="glass-panel">
-        <div id="chat-header" style="padding: 20px; border-bottom: 1px solid var(--glass-border);">
-            <h3 id="active-ch-name" style="margin:0; font-weight: 600; color: var(--accent-light);">Выберите канал</h3>
-        </div>
-        <div id="messages" class="scroll-v"></div>
-        <div class="input-area">
-            <input type="text" id="mInput" placeholder="Написать сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()" style="width: 55px; padding: 0;">➤</button>
-        </div>
-    </div>
-</div>
-
-<div id="settings-modal" class="modal">
-    <div class="auth-card" style="width: 450px;">
-        <h3 style="margin-top: 0;">Настройки профиля</h3>
-        <div style="text-align: left; margin-bottom: 15px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-left: 5px;">Никнейм</label>
-            <input type="text" id="set-name" style="margin-top: 5px;">
-        </div>
-        <div style="text-align: left; margin-bottom: 20px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-left: 5px;">О себе</label>
-            <textarea id="set-bio" rows="3" style="margin-top: 5px; resize: none;"></textarea>
+<div class="app">
+    <div id="sidebar" class="glass">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin:0">Чаты</h2>
+            <button onclick="openProfileModal('self')" style="width: 40px; padding: 5px;">⚙</button>
         </div>
         
-        <div id="admin-panel" style="display:none; border: 1px solid #ff4757; padding: 15px; border-radius: 16px; margin-bottom: 20px; background: rgba(255, 71, 87, 0.05);">
-            <p style="color: #ff4757; margin: 0 0 10px 0; font-weight: bold; font-size: 12px;">АДМИН-ПАНЕЛЬ</p>
-            <input type="text" id="adm-target" placeholder="Email пользователя" style="margin-bottom: 10px; font-size: 12px;">
-            <div style="display: flex; gap: 5px;">
-                <button onclick="admAction('premium')" style="font-size: 11px; background: #ffa502; flex: 1;">Дать Premium</button>
-                <button onclick="admAction('ban')" style="font-size: 11px; background: #ff4757; flex: 1;">Бан</button>
+        <div id="channel-list" class="scroll"></div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button onclick="openCreateModal()" style="font-size: 12px;">+ Создать</button>
+            <button onclick="openJoinModal()" style="font-size: 12px; background: #334155;">Вступить</button>
+        </div>
+    </div>
+
+    <div id="chat-area" class="glass">
+        <div id="chat-header" style="padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="openProfileModal('channel')">
+            <div id="active-ch-img" class="avatar" style="display:none"></div>
+            <h3 id="active-ch-name" style="margin:0">Выберите чат</h3>
+        </div>
+
+        <div id="messages" class="scroll" style="padding: 20px;"></div>
+
+        <div class="input-box">
+            <div class="emoji-bar">
+                <span onclick="addEmoji('😊')">😊</span><span onclick="addEmoji('😂')">😂</span>
+                <span onclick="addEmoji('🔥')">🔥</span><span onclick="addEmoji('❤️')">❤️</span>
+                <span onclick="addEmoji('👍')">👍</span><span onclick="addEmoji('😎')">😎</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="mInput" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMsg()" style="margin:0">
+                <button onclick="sendMsg()" style="width: 60px;">➤</button>
             </div>
         </div>
+    </div>
+</div>
 
-        <div style="display: flex; gap: 12px;">
-            <button onclick="saveSettings()" style="flex: 1;">Сохранить</button>
-            <button onclick="closeSettings()" style="background: rgba(255,255,255,0.05); color: white; flex: 1;">Отмена</button>
+<div id="profile-modal" class="modal" onclick="if(event.target === this) closeModal()">
+    <div class="card modal-content">
+        <img id="p-img" class="prof-avatar" src="" alt="">
+        <h2 id="p-name">Загрузка...</h2>
+        <p id="p-bio" style="color: var(--text-dim); margin-bottom: 20px;"></p>
+        <div id="p-invite-box" style="display:none; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
+            <small style="color: var(--accent)">ID для вступления (Инвайт):</small>
+            <div id="p-invite-id" style="font-family: monospace; font-size: 18px; margin-top: 5px;"></div>
         </div>
+        
+        <div id="self-settings" style="display:none">
+            <input type="text" id="edit-name" placeholder="Твой ник">
+            <input type="text" id="edit-avatar" placeholder="URL аватарки">
+            <textarea id="edit-bio" placeholder="О себе..."></textarea>
+            <button onclick="saveProfile()">Сохранить</button>
+            <button onclick="logout()" style="background: #ef4444; margin-top: 10px;">Выйти</button>
+        </div>
+        <button onclick="closeModal()" style="background: transparent; border: 1px solid var(--border); margin-top: 15px;">Закрыть</button>
+    </div>
+</div>
+
+<div id="action-modal" class="modal">
+    <div class="card modal-content">
+        <h2 id="action-title">Действие</h2>
+        <input type="text" id="action-input-1" placeholder="...">
+        <input type="text" id="action-input-2" placeholder="...">
+        <button onclick="confirmAction()" id="action-confirm-btn">Ок</button>
+        <button onclick="closeModal()" style="background: transparent; margin-top: 10px;">Отмена</button>
     </div>
 </div>
 
 <script>
-    // ИСПОЛЬЗУЙ СВОИ КЛЮЧИ ТУТ
     const SUPABASE_URL = 'https://gfivysotgsksshpajkdd.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_obJUY1r0Qbcxsd8RSe9pQQ_ewX4Z2Dz';
-    
-    // Исправлено: переименовал константу, чтобы не было конфликта с библиотекой
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let isRegMode = false;
-    let user = null;
-    let profile = null;
-    let activeCh = null;
+    let user = null, profile = null, activeCh = null, isRegMode = false;
 
-    // --- AUTH LOGIC ---
-    function toggleAuthMode() {
+    // --- AUTH ---
+    function toggleAuth() {
         isRegMode = !isRegMode;
         document.getElementById('auth-title').innerText = isRegMode ? 'Регистрация' : 'Вход';
-        document.getElementById('main-auth-btn').innerText = isRegMode ? 'Создать аккаунт' : 'Войти в аккаунт';
-        document.getElementById('auth-toggle-link').innerText = isRegMode ? 'Войти' : 'Создать аккаунт';
+        document.getElementById('auth-btn').innerText = isRegMode ? 'Создать' : 'Войти';
     }
 
     async function runAuth() {
-        const email = document.getElementById('auth-email').value.trim();
-        const pass = document.getElementById('auth-pass').value.trim();
-        const err = document.getElementById('auth-error');
-        
-        if(!email || !pass) { err.innerText = 'Введите логин и пароль'; return; }
-        err.style.color = 'var(--accent)';
-        err.innerText = 'Проверка данных...';
-
-        try {
-            const { data, error } = isRegMode 
-                ? await _supabase.auth.signUp({ email, password: pass })
-                : await _supabase.auth.signInWithPassword({ email, password: pass });
-
-            if (error) throw error;
-            
-            if (isRegMode && data.user) {
-                err.innerText = 'Подтвердите почту (если включено) или войдите';
-                toggleAuthMode();
-            } else {
-                checkSession();
-            }
-        } catch (e) {
-            err.style.color = '#ff4757';
-            err.innerText = e.message;
-        }
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        const { data, error } = isRegMode 
+            ? await _supabase.auth.signUp({ email, password: pass })
+            : await _supabase.auth.signInWithPassword({ email, password: pass });
+        if(error) alert(error.message); else checkSession();
     }
 
     async function checkSession() {
         const { data } = await _supabase.auth.getSession();
-        if (data.session) {
+        if(data.session) {
             user = data.session.user;
-            document.getElementById('auth-screen').style.opacity = '0';
-            setTimeout(() => document.getElementById('auth-screen').style.display = 'none', 300);
-            await loadProfile();
+            document.getElementById('auth-screen').style.display = 'none';
+            await loadMyProfile();
             loadChannels();
         }
     }
 
-    // --- PROFILE ---
-    async function loadProfile() {
-        const { data, error } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
-        if (data) {
-            profile = data;
-            if (user.email === 'elytrabobik302@gmail.com') {
-                document.getElementById('admin-panel').style.display = 'block';
-            }
-        } else {
-            const newName = user.email.split('@')[0];
-            const { data: newProf } = await _supabase.from('profiles').insert([{ id: user.id, username: newName }]).select().single();
-            profile = newProf;
+    // --- PROFILE LOGIC ---
+    async function loadMyProfile() {
+        const { data } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
+        if(data) profile = data;
+        else {
+            const { data: n } = await _supabase.from('profiles').insert([{ id: user.id, username: user.email.split('@')[0] }]).select().single();
+            profile = n;
         }
     }
 
-    function showSettings() {
-        document.getElementById('set-name').value = profile.username || '';
-        document.getElementById('set-bio').value = profile.bio || '';
-        document.getElementById('settings-modal').style.display = 'flex';
+    async function openProfileModal(type, targetId = null) {
+        const modal = document.getElementById('profile-modal');
+        const selfView = document.getElementById('self-settings');
+        const inviteBox = document.getElementById('p-invite-box');
+        
+        selfView.style.display = 'none';
+        inviteBox.style.display = 'none';
+        modal.style.display = 'flex';
+
+        if(type === 'self') {
+            document.getElementById('p-name').innerText = profile.username;
+            document.getElementById('p-bio').innerText = profile.bio || 'Нет описания';
+            document.getElementById('p-img').src = profile.avatar_url || 'https://via.placeholder.com/100';
+            document.getElementById('edit-name').value = profile.username;
+            document.getElementById('edit-avatar').value = profile.avatar_url || '';
+            document.getElementById('edit-bio').value = profile.bio || '';
+            selfView.style.display = 'block';
+        } 
+        else if(type === 'user') {
+            const { data } = await _supabase.from('profiles').select('*').eq('id', targetId).single();
+            document.getElementById('p-name').innerText = data.username;
+            document.getElementById('p-bio').innerText = data.bio || 'Нет описания';
+            document.getElementById('p-img').src = data.avatar_url || 'https://via.placeholder.com/100';
+        }
+        else if(type === 'channel') {
+            if(!activeCh) return closeModal();
+            document.getElementById('p-name').innerText = activeCh.name;
+            document.getElementById('p-bio').innerText = activeCh.description || 'Описание канала';
+            document.getElementById('p-img').src = activeCh.avatar_url || 'https://via.placeholder.com/100';
+            inviteBox.style.display = 'block';
+            document.getElementById('p-invite-id').innerText = activeCh.id;
+        }
     }
 
-    function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
-
-    async function saveSettings() {
-        const username = document.getElementById('set-name').value;
-        const bio = document.getElementById('set-bio').value;
-        await _supabase.from('profiles').update({ username, bio }).eq('id', user.id);
-        location.reload();
+    async function saveProfile() {
+        const username = document.getElementById('edit-name').value;
+        const avatar_url = document.getElementById('edit-avatar').value;
+        const bio = document.getElementById('edit-bio').value;
+        await _supabase.from('profiles').update({ username, avatar_url, bio }).eq('id', user.id);
+        profile = { ...profile, username, avatar_url, bio };
+        alert("Сохранено!");
+        closeModal();
     }
 
-    // --- CHAT & CHANNELS ---
+    // --- CHANNELS & ACTIONS ---
     async function loadChannels() {
         const { data } = await _supabase.from('channels').select('*');
         const list = document.getElementById('channel-list');
         list.innerHTML = '';
-        data?.forEach(ch => {
+        data.forEach(ch => {
             const d = document.createElement('div');
-            d.className = `item-btn ${activeCh?.id === ch.id ? 'active-ch' : ''}`;
-            d.innerHTML = `<span style="opacity: 0.5;">#</span> <span>${ch.name}</span>`;
-            d.onclick = () => { 
-                activeCh = ch; 
-                document.getElementById('active-ch-name').innerText = '# ' + ch.name;
-                loadChannels(); 
-                loadMessages(); 
-            };
+            d.className = `item ${activeCh?.id === ch.id ? 'active' : ''}`;
+            d.innerHTML = `<img src="${ch.avatar_url || 'https://via.placeholder.com/40'}" class="avatar"> <span>${ch.name}</span>`;
+            d.onclick = () => { activeCh = ch; loadChannels(); loadMessages(); };
             list.appendChild(d);
         });
-    }
-
-    async function createChannel() {
-        const name = prompt('Название канала:');
-        if (name) {
-            await _supabase.from('channels').insert([{ name, created_by: user.id }]);
-            loadChannels();
+        if(activeCh) {
+            document.getElementById('active-ch-name').innerText = activeCh.name;
+            document.getElementById('active-ch-img').src = activeCh.avatar_url || '';
+            document.getElementById('active-ch-img').style.display = 'block';
         }
     }
 
+    function openCreateModal() {
+        const m = document.getElementById('action-modal');
+        m.style.display = 'flex';
+        document.getElementById('action-title').innerText = 'Создать канал';
+        document.getElementById('action-input-1').placeholder = 'Название канала';
+        document.getElementById('action-input-2').placeholder = 'URL аватарки (опционально)';
+        document.getElementById('action-confirm-btn').onclick = async () => {
+            const name = document.getElementById('action-input-1').value;
+            const img = document.getElementById('action-input-2').value;
+            if(name) {
+                await _supabase.from('channels').insert([{ name, avatar_url: img, created_by: user.id }]);
+                closeModal(); loadChannels();
+            }
+        };
+    }
+
+    function openJoinModal() {
+        const m = document.getElementById('action-modal');
+        m.style.display = 'flex';
+        document.getElementById('action-title').innerText = 'Вступить по ID';
+        document.getElementById('action-input-1').placeholder = 'Введите ID канала';
+        document.getElementById('action-input-2').style.display = 'none';
+        document.getElementById('action-confirm-btn').onclick = async () => {
+            const id = document.getElementById('action-input-1').value;
+            const { data } = await _supabase.from('channels').select('*').eq('id', id).single();
+            if(data) { activeCh = data; loadChannels(); loadMessages(); closeModal(); }
+            else alert("Канал не найден!");
+        };
+    }
+
+    // --- MESSAGES ---
     async function loadMessages() {
-        if (!activeCh) return;
-        const { data } = await _supabase.from('messages')
-            .select('*')
-            .eq('channel_id', activeCh.id)
-            .order('created_at', { ascending: true });
-        
+        if(!activeCh) return;
+        const { data } = await _supabase.from('messages').select('*').eq('channel_id', activeCh.id).order('created_at', { ascending: true });
         const box = document.getElementById('messages');
         box.innerHTML = '';
-        data?.forEach(renderMessage);
+        data.forEach(renderMessage);
     }
 
     function renderMessage(msg) {
         const box = document.getElementById('messages');
-        const d = document.createElement('div');
         const isMy = msg.author_id === user.id;
+        const d = document.createElement('div');
         d.className = `msg ${isMy ? 'my' : 'other'}`;
-        d.innerHTML = `<span class="msg-meta">${msg.author_name}</span>${msg.content}`;
+        d.innerHTML = `
+            <span class="msg-info" onclick="openProfileModal('user', '${msg.author_id}')">${msg.author_name}</span>
+            <div class="bubble">${msg.content}</div>
+        `;
         box.appendChild(d);
         box.scrollTop = box.scrollHeight;
     }
 
     async function sendMsg() {
         const input = document.getElementById('mInput');
-        if (!input.value || !activeCh) return;
-        if (profile.status === 'banned') return alert('Доступ заблокирован');
-
-        const displayName = profile.username + (profile.is_premium ? ' ★' : '');
-        
-        await _supabase.from('messages').insert([{
+        if(!input.value || !activeCh) return;
+        const { error } = await _supabase.from('messages').insert([{
             content: input.value,
             channel_id: activeCh.id,
             author_id: user.id,
-            author_name: displayName
+            author_name: profile.username
         }]);
         input.value = '';
     }
 
-    // --- REALTIME ---
-    _supabase.channel('global_chat').on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages' 
-    }, payload => {
-        if (activeCh && payload.new.channel_id === activeCh.id) {
-            renderMessage(payload.new);
-        }
+    // --- HELPERS ---
+    function addEmoji(e) { document.getElementById('mInput').value += e; }
+    function closeModal() { 
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        document.getElementById('action-input-2').style.display = 'block'; 
+    }
+    function logout() { _supabase.auth.signOut(); location.reload(); }
+
+    // REALTIME
+    _supabase.channel('room1').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => {
+        if(activeCh && p.new.channel_id === activeCh.id) renderMessage(p.new);
     }).subscribe();
 
-    // Запуск сессии при загрузке
     checkSession();
 </script>
 </body>
