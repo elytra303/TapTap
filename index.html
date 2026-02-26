@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TapTap Messenger FIX</title>
+    <title>TapTap Messenger Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -13,79 +13,113 @@
             --accent: #6366f1;
             --text: #f8fafc;
             --text-dim: #94a3b8;
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.08);
             --danger: #ef4444;
         }
 
-        * { box-sizing: border-box; transition: 0.2s; }
+        /* --- КАСТОМНЫЙ СКРОЛЛБАР --- */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        * { box-sizing: border-box; transition: 0.2s ease; }
         body { 
             margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden;
-            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 40%);
+            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 40%);
         }
 
         .app { display: flex; height: 100vh; padding: 15px; gap: 15px; }
-        .glass { background: var(--panel); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; }
+        .glass { background: var(--panel); backdrop-filter: blur(25px); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; }
         
-        #sidebar { width: 300px; padding: 20px; }
-        #chat-area { flex: 1; position: relative; }
+        #sidebar { width: 320px; padding: 20px; }
+        #chat-area { flex: 1; display: flex; flex-direction: column; }
 
         .scroll { flex: 1; overflow-y: auto; padding-right: 5px; }
-        .item { padding: 12px; margin-bottom: 8px; cursor: pointer; border-radius: 15px; background: rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; }
-        .item:hover { background: rgba(255,255,255,0.08); }
-        .active { background: var(--accent) !important; }
+        .item { padding: 14px; margin-bottom: 8px; cursor: pointer; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid transparent; }
+        .item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.05); }
+        .active { background: var(--accent) !important; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
 
-        .msg { margin-bottom: 12px; display: flex; flex-direction: column; max-width: 80%; }
+        .msg { margin-bottom: 12px; display: flex; flex-direction: column; max-width: 75%; }
         .msg.my { align-self: flex-end; align-items: flex-end; }
-        .bubble { padding: 10px 15px; border-radius: 18px; background: rgba(255,255,255,0.07); font-size: 15px; }
-        .my .bubble { background: var(--accent); }
-        .bubble img { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
-        
-        .msg-info { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+        .bubble { padding: 10px 16px; border-radius: 18px; font-size: 15px; background: rgba(255,255,255,0.07); }
+        .my .bubble { background: var(--accent); border-bottom-right-radius: 4px; }
+        .msg img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border); }
+        .msg-info { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; padding: 0 5px; }
 
-        button { background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 12px; font-weight: 600; cursor: pointer; }
-        input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 12px; border-radius: 12px; color: white; outline: none; }
-        
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .card { background: #1a1d23; padding: 30px; border-radius: 24px; width: 350px; text-align: center; }
+        button { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 14px; font-weight: 600; cursor: pointer; }
+        button:hover { filter: brightness(1.2); }
+        input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 12px; border-radius: 14px; color: white; outline: none; }
+        input:focus { border-color: var(--accent); }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .card-modal { background: #161920; padding: 30px; border-radius: 28px; width: 380px; text-align: center; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
 <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; align-items:center; justify-content:center;">
-    <div class="card">
-        <h2>TapTap Messenger</h2>
+    <div class="card-modal">
+        <h2 style="margin-top:0">TapTap Login</h2>
         <input type="email" id="auth-email" placeholder="Email" style="width:100%; margin-bottom:10px">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%; margin-bottom:20px">
-        <button onclick="runAuth()" style="width:100%">Войти / Регистрация</button>
+        <input type="password" id="auth-pass" placeholder="Password" style="width:100%; margin-bottom:20px">
+        <button onclick="runAuth()" style="width:100%">Продолжить</button>
     </div>
 </div>
 
 <div class="app">
     <div id="sidebar" class="glass">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
-            <h3 id="my-nick" onclick="openProfile('self')" style="cursor:pointer; margin:0">Профиль</h3>
-            <button onclick="logout()" style="background:var(--danger); padding: 5px 10px;">Выйти</button>
+            <h3 id="my-nick-display" onclick="openProfile('self')" style="cursor:pointer; margin:0; font-weight:600">Настройки</h3>
+            <button onclick="logout()" style="background:var(--danger); padding: 8px 12px; border-radius: 10px;">✕</button>
         </div>
+        
         <div id="channel-list" class="scroll"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px">
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px">
             <button onclick="createChannel()">+ Чат</button>
-            <button onclick="joinById()" style="background:#334155">ID</button>
+            <button onclick="joinById()" style="background:#2d3343">ID</button>
         </div>
     </div>
 
     <div id="chat-area" class="glass">
-        <div style="padding:15px; border-bottom:1px solid var(--border); font-weight:bold" id="chat-title">Выберите чат</div>
-        <div id="messages" class="scroll" style="padding:20px; display:flex; flex-direction:column;"></div>
-        <div style="padding:15px; display:flex; gap:10px; background: rgba(0,0,0,0.2)">
-            <button onclick="sendImage()" style="background:#334155">📎</button>
-            <input type="text" id="mInput" placeholder="Сообщение..." style="flex:1" onkeypress="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()">➤</button>
+        <div style="padding:15px 25px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3 id="chat-title" style="margin:0; font-size:18px">Выберите чат</h3>
+                <small id="chat-id-label" style="color:var(--text-dim); font-size:10px"></small>
+            </div>
+            <div id="chat-tools"></div>
+        </div>
+
+        <div id="messages" class="scroll" style="padding:25px; display:flex; flex-direction:column;"></div>
+
+        <div id="input-area" style="padding:15px; background:rgba(0,0,0,0.2); display:none">
+            <div style="margin-bottom:10px; display:flex; gap:12px; font-size: 20px;">
+                <span onclick="addEmoji('😊')" style="cursor:pointer">😊</span>
+                <span onclick="addEmoji('🔥')" style="cursor:pointer">🔥</span>
+                <span onclick="sendImage()" style="cursor:pointer; font-size:16px; color:var(--accent); margin-left:10px">📎 Фото</span>
+            </div>
+            <div style="display:flex; gap:10px">
+                <input type="text" id="mInput" placeholder="Написать..." style="flex:1" onkeypress="if(event.key==='Enter') sendMsg()">
+                <button onclick="sendMsg()" style="width:50px">➤</button>
+            </div>
         </div>
     </div>
 </div>
 
-<div id="modal" class="modal" onclick="if(event.target===this) this.style.display='none'">
-    <div class="card" id="modal-content"></div>
+<div id="modal-profile" class="modal" onclick="if(event.target===this) this.style.display='none'">
+    <div class="card-modal">
+        <h3 id="modal-user-name">Профиль</h3>
+        <p id="modal-user-bio" style="color:var(--text-dim); font-size:14px"></p>
+        
+        <div id="profile-edit-form" style="display:none; margin-top:20px">
+            <input type="text" id="edit-name" placeholder="Новый ник" maxlength="20" style="width:100%; margin-bottom:10px">
+            <textarea id="edit-bio" placeholder="О себе..." style="width:100%; height:80px; background:rgba(0,0,0,0.2); border:1px solid var(--border); color:white; border-radius:14px; padding:10px; margin-bottom:15px; outline:none"></textarea>
+            <button onclick="saveProfile()" style="width:100%">Сохранить изменения</button>
+        </div>
+        
+        <button onclick="document.getElementById('modal-profile').style.display='none'" style="background:none; color:var(--text-dim); margin-top:15px">Закрыть</button>
+    </div>
 </div>
 
 <script>
@@ -99,16 +133,8 @@
         const email = document.getElementById('auth-email').value;
         const pass = document.getElementById('auth-pass').value;
         let { data, error } = await _supabase.auth.signInWithPassword({ email, password: pass });
-        if (error) {
-            let { data: regData, error: regErr } = await _supabase.auth.signUp({ email, password: pass });
-            if (regErr) alert(regErr.message);
-        }
+        if (error) await _supabase.auth.signUp({ email, password: pass });
         checkSession();
-    }
-
-    async function logout() {
-        await _supabase.auth.signOut();
-        window.location.reload();
     }
 
     async function checkSession() {
@@ -124,7 +150,33 @@
     async function loadProfile() {
         const { data } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
         profile = data || { username: user.email.split('@')[0] };
-        document.getElementById('my-nick').innerText = profile.username;
+        document.getElementById('my-nick-display').innerText = profile.username;
+    }
+
+    async function openProfile(type, targetId = null) {
+        const m = document.getElementById('modal-profile');
+        const form = document.getElementById('profile-edit-form');
+        m.style.display = 'flex';
+        
+        if(type === 'self') {
+            document.getElementById('modal-user-name').innerText = profile.username;
+            document.getElementById('modal-user-bio').innerText = profile.bio || "Расскажите о себе";
+            document.getElementById('edit-name').value = profile.username;
+            document.getElementById('edit-bio').value = profile.bio || "";
+            form.style.display = 'block';
+        } else {
+            form.style.display = 'none';
+            const { data } = await _supabase.from('profiles').select('*').eq('id', targetId).single();
+            document.getElementById('modal-user-name').innerText = data.username;
+            document.getElementById('modal-user-bio').innerText = data.bio || "Нет описания";
+        }
+    }
+
+    async function saveProfile() {
+        const u = document.getElementById('edit-name').value;
+        const b = document.getElementById('edit-bio').value;
+        const { error } = await _supabase.from('profiles').update({ username: u, bio: b }).eq('id', user.id);
+        if(!error) { alert("Сохранено!"); loadProfile(); document.getElementById('modal-profile').style.display='none'; }
     }
 
     async function loadChannels() {
@@ -134,26 +186,31 @@
         data?.forEach(ch => {
             const div = document.createElement('div');
             div.className = `item ${activeCh?.id === ch.id ? 'active' : ''}`;
-            div.innerHTML = `<span># ${ch.name.substring(0,30)}</span>`;
-            div.onclick = () => { activeCh = ch; document.getElementById('chat-title').innerText = ch.name; loadMessages(); loadChannels(); };
+            // Убрал символ #
+            div.innerHTML = `<span>${ch.name}</span>`;
+            div.onclick = () => selectChannel(ch);
             list.appendChild(div);
         });
     }
 
-    async function createChannel() {
-        const name = prompt("Название (до 30 симв):");
-        if(name) {
-            await _supabase.from('channels').insert([{ name: name.substring(0,30), created_by: user.id }]);
-            loadChannels();
-        }
+    function selectChannel(ch) {
+        activeCh = ch;
+        document.getElementById('chat-title').innerText = ch.name;
+        document.getElementById('chat-id-label').innerText = `ID: ${ch.id}`;
+        document.getElementById('input-area').style.display = 'block';
+        document.getElementById('chat-tools').innerHTML = `<button onclick="leaveChat()" style="background:rgba(255,255,255,0.1); font-size:12px">Покинуть</button>`;
+        loadChannels();
+        loadMessages();
     }
 
-    async function joinById() {
-        const id = prompt("Введите ID канала:");
-        if(id) {
-            const { data } = await _supabase.from('channels').select('*').eq('id', id).single();
-            if(data) { activeCh = data; loadMessages(); loadChannels(); } else alert("Не найдено");
-        }
+    function leaveChat() {
+        activeCh = null;
+        document.getElementById('chat-title').innerText = 'Выберите чат';
+        document.getElementById('chat-id-label').innerText = '';
+        document.getElementById('messages').innerHTML = '';
+        document.getElementById('input-area').style.display = 'none';
+        document.getElementById('chat-tools').innerHTML = '';
+        loadChannels();
     }
 
     async function loadMessages() {
@@ -161,45 +218,48 @@
         const { data } = await _supabase.from('messages').select('*').eq('channel_id', activeCh.id).order('created_at', { ascending: true });
         const box = document.getElementById('messages');
         box.innerHTML = '';
-        data?.forEach(renderMsg);
-    }
-
-    function renderMsg(msg) {
-        const box = document.getElementById('messages');
-        const isMy = msg.author_id === user.id;
-        const div = document.createElement('div');
-        div.className = `msg ${isMy ? 'my' : 'other'}`;
-        
-        let content = msg.content;
-        if(content.startsWith('http')) {
-            content = `<img src="${content}" onerror="this.style.display='none'"> <span>${content}</span>`;
-        }
-
-        div.innerHTML = `<span class="msg-info">${msg.author_name}</span><div class="bubble">${content}</div>`;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
+        data?.forEach(msg => {
+            const isMy = msg.author_id === user.id;
+            const div = document.createElement('div');
+            div.className = `msg ${isMy ? 'my' : 'other'}`;
+            let content = msg.content;
+            if(content.startsWith('http')) content = `<img src="${content}">`;
+            div.innerHTML = `<span class="msg-info" onclick="openProfile('other', '${msg.author_id}')" style="cursor:pointer">${msg.author_name}</span><div class="bubble">${content}</div>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        });
     }
 
     async function sendMsg() {
         const input = document.getElementById('mInput');
         if(!input.value || !activeCh) return;
-        const { error } = await _supabase.from('messages').insert([{
-            content: input.value, channel_id: activeCh.id, author_id: user.id, author_name: profile.username
-        }]);
-        if(error) console.log(error);
+        await _supabase.from('messages').insert([{ content: input.value, channel_id: activeCh.id, author_id: user.id, author_name: profile.username }]);
         input.value = '';
     }
 
     async function sendImage() {
-        const url = prompt("Вставьте прямую ссылку на картинку:");
-        if(url && activeCh) {
-            await _supabase.from('messages').insert([{ content: url, channel_id: activeCh.id, author_id: user.id, author_name: profile.username }]);
+        const url = prompt("Ссылка на фото:");
+        if(url && activeCh) await _supabase.from('messages').insert([{ content: url, channel_id: activeCh.id, author_id: user.id, author_name: profile.username }]);
+    }
+
+    async function createChannel() {
+        const n = prompt("Имя чата:");
+        if(n) { await _supabase.from('channels').insert([{ name: n, created_by: user.id }]); loadChannels(); }
+    }
+
+    async function joinById() {
+        const id = prompt("ID чата:");
+        if(id) {
+            const { data } = await _supabase.from('channels').select('*').eq('id', id).single();
+            if(data) selectChannel(data); else alert("Не найден!");
         }
     }
 
-    // Авто-обновление
-    _supabase.channel('room1').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => loadMessages()).subscribe();
-    _supabase.channel('room2').on('postgres_changes', { event: '*', schema: 'public', table: 'channels' }, () => loadChannels()).subscribe();
+    function addEmoji(e) { document.getElementById('mInput').value += e; }
+    function logout() { _supabase.auth.signOut(); location.reload(); }
+
+    _supabase.channel('m').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => loadMessages()).subscribe();
+    _supabase.channel('c').on('postgres_changes', { event: '*', schema: 'public', table: 'channels' }, () => loadChannels()).subscribe();
 
     checkSession();
 </script>
