@@ -3,222 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TapTap Messenger Pro</title>
+    <title>TapTap Messenger Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --accent: #00d2ff;
-            --text: #ffffff;
-            --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --bg: #0b0e14;
+            --panel: rgba(23, 28, 38, 0.8);
+            --accent: #7c4dff;
+            --accent-light: #b388ff;
+            --text: #e1e1e6;
+            --text-dim: #a1a1aa;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --my-msg: #7c4dff;
         }
+
+        * { box-sizing: border-box; transition: all 0.2s ease; }
 
         body, html { 
             margin: 0; padding: 0; height: 100%; 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg-gradient);
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg);
+            background-image: radial-gradient(circle at top right, #1a1535, transparent),
+                              radial-gradient(circle at bottom left, #0d1117, transparent);
             color: var(--text);
             overflow: hidden;
         }
 
-        /* Эффект Liquid Glass */
-        .glass-panel {
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        /* Экран входа */
+        /* --- AUTH SCREEN --- */
         #auth-screen {
             position: fixed; inset: 0; z-index: 9999;
             display: flex; align-items: center; justify-content: center;
-            background: var(--bg-gradient);
+            background: var(--bg);
         }
-        .auth-card { width: 350px; padding: 40px; text-align: center; }
-        
-        /* Главный интерфейс */
+        .auth-card { 
+            width: 380px; padding: 40px; 
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* --- LAYOUT --- */
         .app-container {
-            display: flex; height: 100vh; width: 100vw; padding: 20px; box-sizing: border-box; gap: 20px;
+            display: flex; height: 100vh; padding: 15px; gap: 15px;
         }
 
-        #sidebar { width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        #chat-main { flex: 1; display: flex; flex-direction: column; }
+        .glass-panel {
+            background: var(--panel);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            display: flex; flex-direction: column;
+        }
 
-        /* Список каналов */
-        .scroll-v { overflow-y: auto; flex: 1; padding-right: 5px; }
-        .scroll-v::-webkit-scrollbar { width: 5px; }
+        #sidebar { width: 320px; padding: 20px; }
+        #chat-main { flex: 1; position: relative; overflow: hidden; }
+
+        /* --- ELEMENTS --- */
+        h2 { font-weight: 600; font-size: 22px; margin: 0; letter-spacing: -0.5px; }
+
+        .scroll-v { 
+            flex: 1; overflow-y: auto; padding-right: 8px; 
+            scrollbar-width: thin; scrollbar-color: var(--glass-border) transparent;
+        }
+        .scroll-v::-webkit-scrollbar { width: 4px; }
         .scroll-v::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
 
         .item-btn {
-            padding: 15px; margin-bottom: 10px; cursor: pointer;
-            transition: 0.3s; display: flex; align-items: center; gap: 10px;
+            padding: 14px 18px; margin-bottom: 8px; cursor: pointer;
+            border-radius: 16px; border: 1px solid transparent;
+            display: flex; align-items: center; gap: 12px;
+            background: rgba(255,255,255,0.03);
         }
-        .item-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
-        .active-ch { background: var(--accent) !important; color: #000; font-weight: bold; }
+        .item-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--glass-border); }
+        .active-ch { background: var(--accent) !important; box-shadow: 0 8px 20px rgba(124, 77, 255, 0.3); }
 
-        /* Сообщения */
-        #messages { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 20px; }
+        /* --- MESSAGES --- */
+        #messages { padding: 25px; gap: 12px; display: flex; flex-direction: column; }
         .msg {
-            padding: 12px 18px; border-radius: 15px; max-width: 70%;
-            animation: fadeIn 0.3s ease;
+            padding: 12px 18px; border-radius: 18px; max-width: 75%;
+            font-size: 15px; line-height: 1.5; position: relative;
+            animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
-        .msg.my { align-self: flex-end; background: var(--accent); color: #000; border-bottom-right-radius: 2px; }
-        .msg.other { align-self: flex-start; background: var(--glass); border-bottom-left-radius: 2px; }
+        .msg.my { 
+            align-self: flex-end; background: var(--my-msg); color: white; 
+            border-bottom-right-radius: 4px; 
+        }
+        .msg.other { 
+            align-self: flex-start; background: rgba(255,255,255,0.07); 
+            border-bottom-left-radius: 4px; 
+        }
+        .msg-meta { font-size: 11px; opacity: 0.6; margin-bottom: 4px; display: block; font-weight: 600; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Инпуты и кнопки */
+        /* --- INPUTS --- */
         input, textarea {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            border-radius: 10px; padding: 12px; color: white; outline: none; width: 100%; box-sizing: border-box;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+            border-radius: 14px; padding: 14px; color: white; outline: none; width: 100%;
         }
+        input:focus { border-color: var(--accent); background: rgba(0,0,0,0.3); }
+
         button {
-            background: var(--accent); border: none; padding: 12px 20px; border-radius: 10px;
-            color: #000; font-weight: bold; cursor: pointer; transition: 0.3s;
+            background: var(--accent); border: none; padding: 12px 24px; border-radius: 14px;
+            color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        button:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--accent); }
+        button:hover { transform: translateY(-1px); filter: brightness(1.1); box-shadow: 0 6px 15px rgba(124, 77, 255, 0.4); }
+        button:active { transform: translateY(0); }
 
-        /* Модалка настроек */
+        .input-area { padding: 20px; display: flex; gap: 12px; background: rgba(0,0,0,0.1); }
+
+        /* --- MODAL --- */
         .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
             display: none; align-items: center; justify-content: center; z-index: 1000;
+            backdrop-filter: blur(10px);
         }
 
-        .admin-tag { color: #ff4757; font-size: 10px; border: 1px solid #ff4757; padding: 2px 5px; border-radius: 5px; margin-left: 5px; }
-        .premium-star { color: #ffa502; }
+        .admin-tag { color: #ff4757; font-size: 10px; border: 1px solid #ff4757; padding: 2px 6px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
-    <div class="glass-panel auth-card">
-        <h1 id="auth-title">TapTap Вход</h1>
-        <input type="email" id="auth-email" placeholder="Email" style="margin-bottom: 15px;">
+    <div class="auth-card">
+        <h1 id="auth-title" style="margin-top:0; font-weight: 600;">TapTap</h1>
+        <p style="color: var(--text-dim); margin-bottom: 30px;">Твой личный крипто-мессенджер</p>
+        <input type="email" id="auth-email" placeholder="Электронная почта" style="margin-bottom: 12px;">
         <input type="password" id="auth-pass" placeholder="Пароль" style="margin-bottom: 25px;">
-        <button id="main-auth-btn" onclick="runAuth()" style="width: 100%;">Войти</button>
-        <p style="margin-top: 20px; font-size: 14px; opacity: 0.7;">
-            <span id="auth-toggle-text">Нет аккаунта?</span> 
-            <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); text-decoration: none;" id="auth-toggle-link">Регистрация</a>
+        <button id="main-auth-btn" onclick="runAuth()" style="width: 100%; padding: 16px;">Войти в аккаунт</button>
+        
+        <p style="margin-top: 25px; font-size: 14px;">
+            <span id="auth-toggle-text" style="color: var(--text-dim);">Впервые здесь?</span> 
+            <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); text-decoration: none; font-weight: 600;" id="auth-toggle-link">Создать аккаунт</a>
         </p>
-        <p id="auth-error" style="color: #ff4757; font-size: 12px; margin-top: 10px;"></p>
+        <p id="auth-error" style="color: #ff4757; font-size: 13px; margin-top: 15px; min-height: 15px;"></p>
     </div>
 </div>
 
 <div class="app-container">
-    <div id="sidebar" class="glass-panel" style="padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin: 0; color: var(--accent);">TapTap</h2>
-            <button onclick="showSettings()" style="padding: 8px; background: none; color: white; font-size: 20px;">⚙</button>
+    <div id="sidebar" class="glass-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h2>Чаты</h2>
+            <button onclick="showSettings()" style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px;">⚙</button>
         </div>
         <div id="channel-list" class="scroll-v"></div>
-        <button onclick="createChannel()" style="background: rgba(255,255,255,0.1); color: white;">+ Новый канал</button>
+        <button onclick="createChannel()" style="background: rgba(255,255,255,0.05); color: var(--text); margin-top: 15px;">+ Новый канал</button>
     </div>
 
     <div id="chat-main" class="glass-panel">
+        <div id="chat-header" style="padding: 20px; border-bottom: 1px solid var(--glass-border);">
+            <h3 id="active-ch-name" style="margin:0; font-weight: 600; color: var(--accent-light);">Выберите канал</h3>
+        </div>
         <div id="messages" class="scroll-v"></div>
-        <div style="padding: 20px; display: flex; gap: 10px; background: rgba(0,0,0,0.2);">
-            <input type="text" id="mInput" placeholder="Введите сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()">➤</button>
+        <div class="input-area">
+            <input type="text" id="mInput" placeholder="Написать сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
+            <button onclick="sendMsg()" style="width: 55px; padding: 0;">➤</button>
         </div>
     </div>
 </div>
 
 <div id="settings-modal" class="modal">
-    <div class="glass-panel" style="padding: 30px; width: 400px;">
-        <h3>Настройки профиля</h3>
-        <label>Никнейм</label>
-        <input type="text" id="set-name" style="margin-bottom: 15px;">
-        <label>Аватар (URL)</label>
-        <input type="text" id="set-avatar" style="margin-bottom: 15px;">
-        <label>О себе</label>
-        <textarea id="set-bio" style="margin-bottom: 20px;"></textarea>
+    <div class="auth-card" style="width: 450px;">
+        <h3 style="margin-top: 0;">Настройки профиля</h3>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 12px; color: var(--text-dim); margin-left: 5px;">Никнейм</label>
+            <input type="text" id="set-name" style="margin-top: 5px;">
+        </div>
+        <div style="text-align: left; margin-bottom: 20px;">
+            <label style="font-size: 12px; color: var(--text-dim); margin-left: 5px;">О себе</label>
+            <textarea id="set-bio" rows="3" style="margin-top: 5px; resize: none;"></textarea>
+        </div>
         
-        <div id="admin-panel" style="display:none; border: 1px solid #ff4757; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
-            <p style="color: #ff4757; margin: 0 0 10px 0;">Админ-зона</p>
-            <input type="text" id="adm-target" placeholder="Email цели" style="margin-bottom: 5px; font-size: 12px;">
-            <button onclick="admAction('premium')" style="font-size: 10px; background: #ffa502;">Premium</button>
-            <button onclick="admAction('ban')" style="font-size: 10px; background: #ff4757;">Ban</button>
+        <div id="admin-panel" style="display:none; border: 1px solid #ff4757; padding: 15px; border-radius: 16px; margin-bottom: 20px; background: rgba(255, 71, 87, 0.05);">
+            <p style="color: #ff4757; margin: 0 0 10px 0; font-weight: bold; font-size: 12px;">АДМИН-ПАНЕЛЬ</p>
+            <input type="text" id="adm-target" placeholder="Email пользователя" style="margin-bottom: 10px; font-size: 12px;">
+            <div style="display: flex; gap: 5px;">
+                <button onclick="admAction('premium')" style="font-size: 11px; background: #ffa502; flex: 1;">Дать Premium</button>
+                <button onclick="admAction('ban')" style="font-size: 11px; background: #ff4757; flex: 1;">Бан</button>
+            </div>
         </div>
 
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 12px;">
             <button onclick="saveSettings()" style="flex: 1;">Сохранить</button>
-            <button onclick="closeSettings()" style="background: rgba(255,255,255,0.1); color: white;">Закрыть</button>
+            <button onclick="closeSettings()" style="background: rgba(255,255,255,0.05); color: white; flex: 1;">Отмена</button>
         </div>
     </div>
 </div>
 
 <script>
+    // ИСПОЛЬЗУЙ СВОИ КЛЮЧИ ТУТ
     const SUPABASE_URL = 'https://gfivysotgsksshpajkdd.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_obJUY1r0Qbcxsd8RSe9pQQ_ewX4Z2Dz';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Исправлено: переименовал константу, чтобы не было конфликта с библиотекой
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let isRegMode = false;
     let user = null;
     let profile = null;
     let activeCh = null;
 
-    // --- АВТОРИЗАЦИЯ ---
+    // --- AUTH LOGIC ---
     function toggleAuthMode() {
         isRegMode = !isRegMode;
-        document.getElementById('auth-title').innerText = isRegMode ? 'TapTap Регистрация' : 'TapTap Вход';
-        document.getElementById('main-auth-btn').innerText = isRegMode ? 'Зарегистрироваться' : 'Войти';
-        document.getElementById('auth-toggle-text').innerText = isRegMode ? 'Уже есть аккаунт?' : 'Нет аккаунта?';
-        document.getElementById('auth-toggle-link').innerText = isRegMode ? 'Вход' : 'Регистрация';
+        document.getElementById('auth-title').innerText = isRegMode ? 'Регистрация' : 'Вход';
+        document.getElementById('main-auth-btn').innerText = isRegMode ? 'Создать аккаунт' : 'Войти в аккаунт';
+        document.getElementById('auth-toggle-link').innerText = isRegMode ? 'Войти' : 'Создать аккаунт';
     }
 
     async function runAuth() {
         const email = document.getElementById('auth-email').value.trim();
         const pass = document.getElementById('auth-pass').value.trim();
         const err = document.getElementById('auth-error');
-        err.innerText = 'Загрузка...';
+        
+        if(!email || !pass) { err.innerText = 'Введите логин и пароль'; return; }
+        err.style.color = 'var(--accent)';
+        err.innerText = 'Проверка данных...';
 
-        if(!email || !pass) { err.innerText = 'Заполните все поля!'; return; }
+        try {
+            const { data, error } = isRegMode 
+                ? await _supabase.auth.signUp({ email, password: pass })
+                : await _supabase.auth.signInWithPassword({ email, password: pass });
 
-        const { data, error } = isRegMode 
-            ? await supabase.auth.signUp({ email, password: pass })
-            : await supabase.auth.signInWithPassword({ email, password: pass });
-
-        if (error) {
-            err.innerText = error.message;
-        } else {
-            err.innerText = 'Успех!';
-            checkSession();
+            if (error) throw error;
+            
+            if (isRegMode && data.user) {
+                err.innerText = 'Подтвердите почту (если включено) или войдите';
+                toggleAuthMode();
+            } else {
+                checkSession();
+            }
+        } catch (e) {
+            err.style.color = '#ff4757';
+            err.innerText = e.message;
         }
     }
 
     async function checkSession() {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await _supabase.auth.getSession();
         if (data.session) {
             user = data.session.user;
-            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('auth-screen').style.opacity = '0';
+            setTimeout(() => document.getElementById('auth-screen').style.display = 'none', 300);
             await loadProfile();
             loadChannels();
         }
     }
 
-    // --- ПРОФИЛЬ И НАСТРОЙКИ ---
+    // --- PROFILE ---
     async function loadProfile() {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        const { data, error } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
         if (data) {
             profile = data;
             if (user.email === 'elytrabobik302@gmail.com') {
                 document.getElementById('admin-panel').style.display = 'block';
             }
         } else {
-            // Если профиля нет, создаем его
             const newName = user.email.split('@')[0];
-            const { data: newProf } = await supabase.from('profiles').insert([{ id: user.id, username: newName }]).select().single();
+            const { data: newProf } = await _supabase.from('profiles').insert([{ id: user.id, username: newName }]).select().single();
             profile = newProf;
         }
     }
 
     function showSettings() {
         document.getElementById('set-name').value = profile.username || '';
-        document.getElementById('set-avatar').value = profile.avatar_url || '';
         document.getElementById('set-bio').value = profile.bio || '';
         document.getElementById('settings-modal').style.display = 'flex';
     }
@@ -227,42 +279,48 @@
 
     async function saveSettings() {
         const username = document.getElementById('set-name').value;
-        const avatar_url = document.getElementById('set-avatar').value;
         const bio = document.getElementById('set-bio').value;
-
-        await supabase.from('profiles').update({ username, avatar_url, bio }).eq('id', user.id);
-        alert('Сохранено!');
+        await _supabase.from('profiles').update({ username, bio }).eq('id', user.id);
         location.reload();
     }
 
-    // --- КАНАЛЫ И ЧАТ ---
+    // --- CHAT & CHANNELS ---
     async function loadChannels() {
-        const { data } = await supabase.from('channels').select('*');
+        const { data } = await _supabase.from('channels').select('*');
         const list = document.getElementById('channel-list');
         list.innerHTML = '';
-        data.forEach(ch => {
+        data?.forEach(ch => {
             const d = document.createElement('div');
-            d.className = `glass-panel item-btn ${activeCh?.id === ch.id ? 'active-ch' : ''}`;
-            d.innerHTML = `<span># ${ch.name}</span>`;
-            d.onclick = () => { activeCh = ch; loadChannels(); loadMessages(); };
+            d.className = `item-btn ${activeCh?.id === ch.id ? 'active-ch' : ''}`;
+            d.innerHTML = `<span style="opacity: 0.5;">#</span> <span>${ch.name}</span>`;
+            d.onclick = () => { 
+                activeCh = ch; 
+                document.getElementById('active-ch-name').innerText = '# ' + ch.name;
+                loadChannels(); 
+                loadMessages(); 
+            };
             list.appendChild(d);
         });
     }
 
     async function createChannel() {
-        const name = prompt('Название нового канала:');
+        const name = prompt('Название канала:');
         if (name) {
-            await supabase.from('channels').insert([{ name, created_by: user.id }]);
+            await _supabase.from('channels').insert([{ name, created_by: user.id }]);
             loadChannels();
         }
     }
 
     async function loadMessages() {
         if (!activeCh) return;
-        const { data } = await supabase.from('messages').select('*').eq('channel_id', activeCh.id).order('created_at', { ascending: true });
+        const { data } = await _supabase.from('messages')
+            .select('*')
+            .eq('channel_id', activeCh.id)
+            .order('created_at', { ascending: true });
+        
         const box = document.getElementById('messages');
         box.innerHTML = '';
-        data.forEach(renderMessage);
+        data?.forEach(renderMessage);
     }
 
     function renderMessage(msg) {
@@ -270,7 +328,7 @@
         const d = document.createElement('div');
         const isMy = msg.author_id === user.id;
         d.className = `msg ${isMy ? 'my' : 'other'}`;
-        d.innerHTML = `<small style="opacity:0.7; font-size:10px;">${msg.author_name}</small><br>${msg.content}`;
+        d.innerHTML = `<span class="msg-meta">${msg.author_name}</span>${msg.content}`;
         box.appendChild(d);
         box.scrollTop = box.scrollHeight;
     }
@@ -278,24 +336,31 @@
     async function sendMsg() {
         const input = document.getElementById('mInput');
         if (!input.value || !activeCh) return;
-        if (profile.status === 'banned' || profile.status === 'muted') return alert('Вы заблокированы!');
+        if (profile.status === 'banned') return alert('Доступ заблокирован');
 
-        const nameWithStar = profile.username + (profile.is_premium ? ' <span class="premium-star">★</span>' : '');
+        const displayName = profile.username + (profile.is_premium ? ' ★' : '');
         
-        await supabase.from('messages').insert([{
+        await _supabase.from('messages').insert([{
             content: input.value,
             channel_id: activeCh.id,
             author_id: user.id,
-            author_name: nameWithStar
+            author_name: displayName
         }]);
         input.value = '';
     }
 
     // --- REALTIME ---
-    supabase.channel('room1').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        if (activeCh && payload.new.channel_id === activeCh.id) renderMessage(payload.new);
+    _supabase.channel('global_chat').on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages' 
+    }, payload => {
+        if (activeCh && payload.new.channel_id === activeCh.id) {
+            renderMessage(payload.new);
+        }
     }).subscribe();
 
+    // Запуск сессии при загрузке
     checkSession();
 </script>
 </body>
